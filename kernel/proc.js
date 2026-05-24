@@ -1,23 +1,57 @@
 import { Sentinel } from './sentinel.js';
+import * as utils from "./utils.js";
 import vm from 'vm';
 
 export const ProcessState = Object.freeze({
     Execution: {
-        zombie: new Sentinel('EXEC_ZOMBIE', 0x1)
+        running: new Sentinel('EXEC_RUN', 0x1),
+        zombie: new Sentinel('EXEC_ZOMBIE', 0x2),
     }
-})
+});
+
+// class MoreProcData {
+//     /**
+//      * @param {Uint8Array?} buffer
+//      * @param {{pwd: string, parentPID: number}} data
+//      */
+//     constructor (buffer, data) {
+//         if (!buffer)
+//             buffer = Buffer.allocUnsafe(136);  /* [pwd - 64 bytes][signal handlers - 64 bytes][parent PID - 8 bytes] */
+
+//         this.mem = buffer.buffer;
+//         this.view = new DataView(
+//             this.mem,
+//             buffer.byteOffset,
+//             this.mem.byteLength
+//         )
+//         this.pwd = data.pwd;
+//     }
+
+//     get pwd() {
+//         return utils.readStringFromRawBuffer(this.mem, 0, 64).replaceAll("\0", "");
+//     }
+
+//     set pwd(v) {
+//         const bytes = new TextEncoder().encode(v);
+//         if (bytes.length > 64)
+//             return;
+
+//         utils.writeStringToRawBuffer(v, this.mem, 0);
+//     }
+// }
 
 export class Process {
     pid;
     context;
     state;
     status;
+    data;
 
     /**
-     * 
      * @param {string} code 
+     * @param {{parent: Process, name: string}} data
      */
-    constructor(code) {
+    constructor(code, data) {
         const sandbox = {
             USI: {
                 cons: {
@@ -34,6 +68,14 @@ export class Process {
         this.context = vm.createContext(sandbox);
         vm.runInContext(code, this.context, {timeout: 10})
         this.state = this.context.main();
+        this.status = ProcessState.Execution.running;
+        this.data = {
+            pwd: "/",
+            signalHandlers: {},
+            parentPID: data.parent?.pid,
+            name: data.name,
+            ...data
+        }
     }
 
     execute() {

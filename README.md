@@ -8,7 +8,9 @@ title: Boot Sequence
 ---
 flowchart LR;
     Entrypoint --- id1>Initialisation]
-    --- id2>Init Process];
+        --- id2>Rootfs Resolve]
+        --- id3>Scheduler Init]
+        --- id4>Scheduler loop]
 ```
 ```mermaid
 ---
