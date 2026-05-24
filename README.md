@@ -9,8 +9,19 @@ title: Boot Sequence
 flowchart LR;
     Entrypoint --- id1>Initialisation]
         --- id2>Rootfs Resolve]
-        --- id3>Scheduler Init]
+        --- id3
         --- id4>Scheduler loop]
+        --> id4;
+
+    subgraph id3["Scheduler Init"]
+        direction TB
+        s1[Create process queue]
+        --- s2;
+        subgraph s2[Start all init processes]
+            direction LR
+            initp1[init];
+        end
+    end
 ```
 ```mermaid
 ---
@@ -28,4 +39,37 @@ sequenceDiagram
     Note over Kernel: Pauses execution
     Note over Kernel: Resumes execution
     Kernel ->> User: 
+```
+```mermaid
+classDiagram
+    direction RL
+    Record <|-- KernelCall
+    class Record
+    KernelCall: +Literal["kcall"] __type
+    KernelCall: +String kcall
+    KernelCall: +any[] args
+```
+```mermaid
+---
+title: Scheduler
+---
+sequenceDiagram
+    participant K0 as Kernel
+    participant K as Kernel (Scheduler)
+    participant U1 as User 1
+    participant U2 as User 2
+    K0 ->> K: schedLoop()
+    K ->> U1: main.next()
+    U1 ->> K: KernelCall
+    Note over K: Executes KernelCall
+    #Note over K: Save return value
+    K ->> K0: return
+    K0 ->> K: schedLoop()
+    K ->> U2: main.next()
+    U2 ->> K: KernelCall
+    Note over K: Executes KernelCall
+    #Note over K: Save return value
+    K ->> K0: return
+    K0 ->> K: schedLoop()
+    K ->> U1: main.next()
 ```

@@ -56,11 +56,11 @@ export class Process {
             USI: {
                 cons: {
                     out: function* out(str) {
-                        yield {
+                        yield Object.freeze({
                             "__type": "kcall",
                             "kcall": "usi-cons-out",
                             "args": [str]
-                        };
+                        });
                     }
                 }
             }
