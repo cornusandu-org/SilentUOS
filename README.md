@@ -31,6 +31,7 @@ sequenceDiagram
     participant Kernel
     participant User
     participant USI as USI<br/>(Userspace Interface)
+    Note right of USI: Controlled and provided by the kernel
     Kernel ->> User: main.next()
     User ->> USI: yield* USI.cons.out('hi')
     USI ->> Kernel: KernelCall("usi_cons_out", 'hi')
@@ -62,14 +63,14 @@ sequenceDiagram
     K ->> U1: main.next()
     U1 ->> K: KernelCall
     Note over K: Executes KernelCall
-    #Note over K: Save return value
+    Note over K: Save return value
     K ->> K0: return
     K0 ->> K: schedLoop()
     K ->> U2: main.next()
     U2 ->> K: KernelCall
     Note over K: Executes KernelCall
-    #Note over K: Save return value
+    Note over K: Save return value
     K ->> K0: return
     K0 ->> K: schedLoop()
-    K ->> U1: main.next()
+    K ->> U1: main.next(returnValue)
 ```

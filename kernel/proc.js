@@ -46,6 +46,7 @@ export class Process {
     state;
     status;
     data;
+    executionRuntimeData;
 
     /**
      * @param {string} code 
@@ -76,25 +77,38 @@ export class Process {
             name: data.name,
             ...data
         }
+        this.executionRuntimeData = {};
     }
 
     execute() {
-        const v = this.state.next();
-        if (v.done)
-            return [true, v.value || 0];
+        if (this.status === ProcessState.Execution.zombie)
+            return [true, this.executionRuntimeData.exitCode || -1];
+        const v = this.state.next(this.executionRuntimeData.kcallReturn || 0);
+        if (v.done) {
+            this.kill(v.value || 0);
+            return [true, this.executionRuntimeData.exitCode];
+        }
         const kcall = v.value;
         if (kcall?.["__type"] === "kcall") {
             switch (kcall["kcall"]) {
                 case "usi-cons-out":
                     for (const str of kcall.args)
                         console.log(str);
+                    this.executionRuntimeData.kcallReturn = 0;
                     break;
                 default:
-                    throw new Error(`Unknown kcall: ${kcall.kcall}`);
+                    console.error(`${this.data.name}: Unknown kcall: ${kcall.kcall}`);
+                    this.kill(-1);
+                    return [true, -1];
             }
         } else {
             throw new Error('Invalid state');
         }
         return [false, 0];
+    }
+
+    kill(code) {
+        this.executionRuntimeData = {exitCode: code};
+        this.status = ProcessState.Execution.zombie;
     }
 };
