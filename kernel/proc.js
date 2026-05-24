@@ -1,5 +1,4 @@
 import { Sentinel } from './sentinel.js';
-import * as utils from "./utils.js";
 import vm from 'vm';
 
 export const ProcessState = Object.freeze({
